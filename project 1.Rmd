@@ -1,0 +1,122 @@
+---
+title: "Project 1"
+author: "Guy Merlin Fomen"
+date: "27 avril 2019"
+output: html_document
+---
+```{r, echo=FALSE}
+library(dplyr)
+library(lattice)
+```
+
+#I. Loading and Processing the data 
+### Code
+```{r, echo=TRUE}
+activity <- read.csv("activity.csv")
+```
+
+
+#II. Mean Total Number of steps Per day
+###1. The total number of steps taken each day
+```{r, echo=TRUE}
+total_steps<- activity %>% group_by(date) %>% summarize(total_day = sum(steps, na.rm = TRUE))
+```
+
+
+###2. Histogram
+```{r, echo=TRUE}
+hist(total_steps$total_day, main = " Histogram of the total number of steps each day", xlab = "Total Number of steps", col = " lightblue")
+```
+
+
+###3. Mean and Median
+* Mean 
+```{r, echo=TRUE}
+m1 <- mean(total_steps$total_day)
+m1
+```
+
+* Median
+```{r, echo=TRUE}
+Med1 <- median(total_steps$total_day)
+Med1
+```
+
+
+#III. Average daily Activity patern
+
+###1. Time serie Plot
+```{r, echo=TRUE}
+avg_steps<- activity %>% group_by(interval) %>% summarize(avg_day = mean(steps, na.rm = TRUE))
+
+plot(avg_steps$interval,avg_steps$avg_day, type = "l",col="blue",xlab="Time", ylab=" Average", main=" AVerage Steps by days")
+u <- which(avg_steps$avg_day==max(avg_steps$avg_day,na.rm = TRUE ))
+
+points(x=avg_steps$interval[u],y=max(avg_steps$avg_day,na.rm=TRUE),type="p",pch=19,col="green")
+points(x=avg_steps$interval[u],y=0,type="p",pch=19,col="green")
+points(x=0,y=max(avg_steps$avg_day,na.rm=TRUE),type="p",pch=19,col="green")
+
+segments(0,max(avg_steps$avg_day,na.rm = TRUE),avg_steps$interval[u],max(avg_steps$avg_day,na.rm = TRUE),col = "green", lty = 5)
+segments(avg_steps$interval[u],0,avg_steps$interval[u],max(avg_steps$avg_day,na.rm = TRUE), col="green", lty = 5)
+grid(30,30)
+avg_steps$interval[u]
+```
+
+
+###2. Interval for the maximum number of daily steps
+The 5-minutes interval on average is[830,835]
+
+#IV. Imputing Data
+###1. Total number of row with NA
+```{r, echo=TRUE}
+totNa <- length(which(is.na(activity$steps)))
+totNa
+```
+
+###2. Strategy to fill out the NA
+We will replace the NA by the mean of over all steps and create the new dataset
+```{r, echo=TRUE}
+activity$steps[which(is.na(activity$steps))] <- rep(round(mean(activity$steps, na.rm = TRUE),0),totNa)
+```
+
+###3. Histogram
+```{r, echo=TRUE}
+total_st<- activity %>% group_by(date) %>% summarize(tot_day = sum(steps, na.rm = TRUE))
+hist(total_st$tot_day, main = " New Histogram of the total number of steps each day", xlab = "Total Number of steps", col = " lightblue")
+```
+
+* Mean 
+```{r, echo=TRUE}
+m2 <- mean(total_st$tot_day)
+m2
+```
+
+* Median
+```{r, echo=TRUE}
+Med2 <- median(total_st$tot_day)
+Med2
+```
+
+
+The Mean and the Median are now different from the previous one above.
+
+# The Impact of the Imputs
+```{r, echo=TRUE}
+abs(m1-m2) # for the means
+abs(Med1-Med2) # for the Median
+```
+
+
+#V. Activities differences between Weekdays and Weekends
+###1. Weekday and Weekend factors
+```{r, echo=TRUE}
+activity$week <- ifelse(weekdays(as.Date(levels(activity$date))[activity$date]) %in% c("samedi", "dimanche"), "weekend", "weekday")
+```
+
+###2. Time serie plot
+```{r, echo=TRUE}
+avg_steps2<- activity %>% group_by(interval,week) %>% summarize(avg_day = mean(steps, na.rm = TRUE))
+xyplot(avg_steps2$avg_day~avg_steps2$interval|avg_steps2$week, avg_steps2,layout=c(1,2), type="l", xlab = "Time", ylab="Average")
+
+```
+
